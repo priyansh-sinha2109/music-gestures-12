@@ -9,70 +9,76 @@ const status = document.getElementById("status");
 const nowPlaying = document.getElementById("nowPlaying");
 const modeButtons = document.querySelectorAll(".mode-btn");
 
+video.style.transform = "scaleX(-1)";
+canvas.style.transform = "scaleX(-1)";
+
 // =====================
 // CAMERA
 // =====================
 navigator.mediaDevices
-  .getUserMedia({ video: { width: 320, height: 240 } })
-  .then((stream) => {
-    video.srcObject = stream;
+  .getUserMedia({
+    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 60, min: 30 } },
   })
-  .catch(() => {
-    status.innerText = "Camera permission required";
-  });
+  .then((stream) => { video.srcObject = stream; })
+  .catch(() => { status.innerText = "Camera permission required"; });
 
 // =====================
-// AUDIO SYSTEM (REAL SAMPLES)
+// AUDIO
 // =====================
 let started = false;
 let audioReady = false;
 
 const BASE_NOTES = ["C", "D", "E", "F", "G", "A", "B"];
-const players = {};
+const buffers = {};
 const AVAILABLE_NOTES = [];
 
 for (let o = 2; o <= 6; o++) {
   BASE_NOTES.forEach((n) => {
     const note = n + o;
-    players[note] = new Tone.Player({
-      url: `audio/${note}.mp3`,
-    }).toDestination();
+    buffers[note] = new Tone.ToneAudioBuffer(`audio/${note}.mp3`);
     AVAILABLE_NOTES.push(note);
   });
 }
-players.C7 = new Tone.Player({ url: "audio/C7.mp3" }).toDestination();
+buffers.C7 = new Tone.ToneAudioBuffer("audio/C7.mp3");
 AVAILABLE_NOTES.push("C7");
+
+const masterGain = new Tone.Gain(1).toDestination();
 
 Tone.loaded().then(() => {
   audioReady = true;
-  status.innerText = "Ready | Perform melody with hand gestures";
+  Tone.context.lookAhead = 0.01;
+
+  // Pre-warm buffers
+  AVAILABLE_NOTES.forEach((note) => {
+    const buf = buffers[note];
+    if (!buf?.loaded) return;
+    const src = new Tone.ToneBufferSource(buf).connect(masterGain);
+    src.volume.value = -60;
+    src.start(Tone.now());
+    src.stop(Tone.now() + 0.02);
+    setTimeout(() => src.dispose(), 100);
+  });
+
+  status.innerText = "Ready | Point & strike with one or two hands";
 });
 
 async function ensureAudioStarted() {
   if (started) return;
   await Tone.start();
+  Tone.context.lookAhead = 0.01;
   started = true;
 }
-
 ["pointerdown", "touchstart", "keydown", "click"].forEach((evt) => {
-  document.body.addEventListener(
-    evt,
-    () => {
-      ensureAudioStarted().catch(() => {});
-    },
-    { passive: true },
-  );
+  document.body.addEventListener(evt, () => ensureAudioStarted().catch(() => {}), { passive: true });
 });
 
 // =====================
 // UI KEYBOARD
 // =====================
 let keyViews = [];
-
 function buildKeyboard() {
   keyboard.innerHTML = "";
   keyViews = [];
-
   for (let o = 2; o <= 6; o++) {
     BASE_NOTES.forEach((n) => {
       const note = n + o;
@@ -83,233 +89,275 @@ function buildKeyboard() {
       keyViews.push({ note, el });
     });
   }
-
   const c7 = document.createElement("div");
   c7.className = "white";
   c7.innerHTML = "<span>C7</span>";
   keyboard.appendChild(c7);
   keyViews.push({ note: "C7", el: c7 });
 }
-
 buildKeyboard();
 
 function flashKey(note) {
   const key = keyViews.find((k) => k.note === note);
   if (!key) return;
-
   key.el.classList.add("active");
-  setTimeout(() => key.el.classList.remove("active"), 170);
+  setTimeout(() => key.el.classList.remove("active"), 150);
 }
 
 // =====================
-// MELODY ENGINE
+// MODES
 // =====================
 const MODES = {
-  cinematic: {
-    label: "Cinematic",
-    phrase: [0, 2, 4, 7, 4, 2, 5, 4],
-    rhythmMs: 210,
-    gainDb: 3,
-  },
-  uplift: {
-    label: "Uplift",
-    phrase: [0, 2, 4, 5, 7, 9, 7, 5],
-    rhythmMs: 150,
-    gainDb: 5,
-  },
-  chill: {
-    label: "Chill",
-    phrase: [0, 3, 5, 7, 10, 7, 5, 3],
-    rhythmMs: 280,
-    gainDb: 1,
-  },
+  cinematic: { label: "Cinematic", gainDb: 3 },
+  uplift:    { label: "Uplift",    gainDb: 5 },
+  chill:     { label: "Chill",     gainDb: 1 },
 };
-
 let mode = "cinematic";
-let stepIndex = 0;
-let lastPlayAt = 0;
-let smoothedX = null;
-let smoothedY = null;
-let filteredX = null;
-let filteredY = null;
-let lastY = null;
-let strikeArmed = true;
-
-const SMOOTH_ALPHA = 0.42;
-const MOVE_THRESHOLD = 0.012;
-const STRIKE_DOWN_VELOCITY = 0.01;
-const REARM_UP_VELOCITY = -0.006;
-
-function smoothAxis(prev, value) {
-  if (prev === null) return value;
-  return SMOOTH_ALPHA * value + (1 - SMOOTH_ALPHA) * prev;
-}
-
-function thresholdAxis(prev, value) {
-  if (prev === null) return value;
-  if (Math.abs(value - prev) < MOVE_THRESHOLD) return prev;
-  return value;
-}
-
-function clamp(val, min, max) {
-  return Math.max(min, Math.min(max, val));
-}
-
-function noteToParts(note) {
-  const name = note.slice(0, -1);
-  const octave = parseInt(note.slice(-1), 10);
-  return { name, octave };
-}
-
-function partsToNote(name, octave) {
-  const o = clamp(octave, 2, 7);
-  const note = `${name}${o}`;
-  if (players[note]) return note;
-
-  const fallbackOctave = clamp(o - 1, 2, 7);
-  const fallback = `${name}${fallbackOctave}`;
-  return players[fallback] ? fallback : null;
-}
-
-function getRootFromGesture(x, y) {
-  const rootName =
-    BASE_NOTES[
-      clamp(Math.floor(x * BASE_NOTES.length), 0, BASE_NOTES.length - 1)
-    ];
-
-  let octave = 4;
-  if (y < 0.3) octave = 5;
-  else if (y > 0.7) octave = 3;
-
-  return partsToNote(rootName, octave);
-}
-
-function buildPhrase(rootNote) {
-  const root = noteToParts(rootNote);
-  const rootIdx = BASE_NOTES.indexOf(root.name);
-
-  const config = MODES[mode];
-  const phraseLen = 3;
-  const notes = [];
-
-  for (let i = 0; i < phraseLen; i++) {
-    const degree = config.phrase[(stepIndex + i) % config.phrase.length];
-    const absolute = rootIdx + degree;
-    const name = BASE_NOTES[absolute % BASE_NOTES.length];
-    const octaveShift = Math.floor(absolute / BASE_NOTES.length);
-    const note = partsToNote(name, root.octave + octaveShift);
-    if (note) notes.push(note);
-  }
-
-  stepIndex = (stepIndex + 1) % config.phrase.length;
-  return notes;
-}
-
-function playSingleNote(note, y) {
-  if (!started || !audioReady || !note) return;
-  const player = players[note];
-  if (!player) return;
-
-  const modeGain = MODES[mode].gainDb;
-  const dynamicGain = clamp(1.25 - y, 0.38, 1.0);
-  player.volume.value = Tone.gainToDb(dynamicGain) + modeGain;
-
-  player.stop();
-  player.start();
-
-  flashKey(note);
-  nowPlaying.innerText = `${MODES[mode].label} | ${note}`;
-}
-
-function playPhrase(notes, y) {
-  const spacing = MODES[mode].rhythmMs;
-  for (let i = 0; i < notes.length; i++) {
-    setTimeout(() => {
-      playSingleNote(notes[i], y);
-    }, i * spacing);
-  }
-}
 
 modeButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     modeButtons.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-
     mode = btn.dataset.mode;
-    stepIndex = 0;
     status.innerText = `Mode: ${MODES[mode].label}`;
   });
 });
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+function noteFromGesture(x, y) {
+  const nx = clamp((x - 0.05) / 0.9, 0, 1);
+  const ny = clamp((y - 0.05) / 0.9, 0, 1);
+  const degree = clamp(Math.floor(nx * 7), 0, 6);
+  const octave = ny < 0.33 ? 5 : ny < 0.66 ? 4 : 3;
+  const name = BASE_NOTES[degree];
+  const candidate = `${name}${octave}`;
+  return buffers[candidate]?.loaded ? candidate : null;
+}
+
+function playNote(note, gain) {
+  if (!audioReady || !note) return;
+  const buf = buffers[note];
+  if (!buf?.loaded) return;
+  const env = new Tone.Gain(gain).connect(masterGain);
+  const src = new Tone.ToneBufferSource(buf).connect(env);
+  src.start(Tone.now() + 0.003);
+  src.onended = () => { src.dispose(); env.dispose(); };
+  flashKey(note);
+  nowPlaying.innerText = `${MODES[mode].label} | ${note}`;
+}
+
+// =====================
+// ONE-EURO
+// =====================
+class OneEuro {
+  constructor(minCutoff = 2.0, beta = 0.03) {
+    this.minCutoff = minCutoff; this.beta = beta; this.dCutoff = 1.0;
+    this.xPrev = null; this.dxPrev = 0; this.tPrev = null;
+  }
+  _alpha(c, dt) { const r = 2 * Math.PI * c * dt; return r / (r + 1); }
+  filter(x, t) {
+    if (this.tPrev === null) { this.tPrev = t; this.xPrev = x; return x; }
+    const dt = Math.max((t - this.tPrev) / 1000, 1e-3);
+    const dx = (x - this.xPrev) / dt;
+    const aD = this._alpha(this.dCutoff, dt);
+    const dxHat = aD * dx + (1 - aD) * this.dxPrev;
+    const cutoff = this.minCutoff + this.beta * Math.abs(dxHat);
+    const a = this._alpha(cutoff, dt);
+    const xHat = a * x + (1 - a) * this.xPrev;
+    this.xPrev = xHat; this.dxPrev = dxHat; this.tPrev = t;
+    return xHat;
+  }
+  reset() { this.xPrev = null; this.dxPrev = 0; this.tPrev = null; }
+}
+
+// =====================
+// TRACKED HAND SLOT (independent per hand)
+// =====================
+class HandSlot {
+  constructor(id, color) {
+    this.id = id;
+    this.color = color;
+    this.active = false;
+    this.lastX = 0;
+    this.lastY = 0;
+    this.fx = new OneEuro(2.0, 0.03);
+    this.fy = new OneEuro(2.0, 0.03);
+    this.yHistory = [];
+    this.strikeArmed = true;
+    this.lastPlayAt = 0;
+    this.lostFrames = 0;
+  }
+  reset() {
+    this.active = false;
+    this.fx.reset(); this.fy.reset();
+    this.yHistory.length = 0;
+    this.strikeArmed = true;
+  }
+}
+const slots = [
+  new HandSlot(0, "rgba(30, 240, 213, 0.9)"),
+  new HandSlot(1, "rgba(240, 120, 30, 0.9)"),
+];
+
+// =====================
+// SPATIAL HAND ASSIGNMENT (the key fix)
+// =====================
+// Instead of trusting MediaPipe's Left/Right labels (which flicker),
+// assign each detected hand to the slot whose last position is closest.
+function assignHandsToSlots(detectedHands) {
+  // detectedHands = [{ lm, centroidX, centroidY }, ...]
+  const assigned = [null, null];
+  const used = new Set();
+
+  if (detectedHands.length === 0) return assigned;
+
+  // Gather active slots with their last positions
+  const activeSlots = slots
+    .map((s, i) => ({ i, s }))
+    .filter(({ s }) => s.active);
+
+  // For each active slot, find the nearest unused detection
+  for (const { i, s } of activeSlots) {
+    let bestIdx = -1;
+    let bestDist = Infinity;
+    for (let d = 0; d < detectedHands.length; d++) {
+      if (used.has(d)) continue;
+      const dx = detectedHands[d].centroidX - s.lastX;
+      const dy = detectedHands[d].centroidY - s.lastY;
+      const dist = dx * dx + dy * dy;
+      if (dist < bestDist) { bestDist = dist; bestIdx = d; }
+    }
+    // Only accept match if close enough (hands don't teleport)
+    if (bestIdx >= 0 && bestDist < 0.25 * 0.25) {
+      assigned[i] = detectedHands[bestIdx];
+      used.add(bestIdx);
+    }
+  }
+
+  // Assign remaining detections to inactive slots
+  for (let d = 0; d < detectedHands.length; d++) {
+    if (used.has(d)) continue;
+    for (let i = 0; i < slots.length; i++) {
+      if (!assigned[i]) {
+        assigned[i] = detectedHands[d];
+        used.add(d);
+        break;
+      }
+    }
+  }
+
+  return assigned;
+}
+
+// =====================
+// PER-HAND STRIKE LOGIC
+// =====================
+const STRIKE_VEL = 0.6;
+const REARM_VEL = -0.4;
+const LOST_THRESHOLD = 8;
+
+function processSlot(slot, detection) {
+  if (!detection) {
+    slot.lostFrames++;
+    if (slot.lostFrames > LOST_THRESHOLD) slot.reset();
+    return;
+  }
+  slot.lostFrames = 0;
+  slot.active = true;
+
+  const lm = detection.lm;
+  const now = performance.now();
+
+  const rawX = clamp(1 - lm[8].x, 0, 1);
+  const rawY = clamp(lm[8].y, 0, 1);
+
+  const fx = slot.fx.filter(rawX, now);
+  const fy = slot.fy.filter(rawY, now);
+
+  slot.lastX = detection.centroidX;
+  slot.lastY = detection.centroidY;
+
+  // Draw cursor
+  ctx.beginPath();
+  ctx.arc((1 - fx) * canvas.width, fy * canvas.height, 10, 0, Math.PI * 2);
+  ctx.fillStyle = slot.color;
+  ctx.fill();
+
+  // Slot label
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = slot.color;
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillText(`H${slot.id + 1}`, (1 - fx) * canvas.width + 14, fy * canvas.height + 5);
+  ctx.restore();
+
+  // Velocity
+  slot.yHistory.push({ y: fy, t: now });
+  if (slot.yHistory.length > 3) slot.yHistory.shift();
+
+  let velY = 0;
+  if (slot.yHistory.length >= 2) {
+    const first = slot.yHistory[0];
+    const last = slot.yHistory[slot.yHistory.length - 1];
+    const dt = Math.max((last.t - first.t) / 1000, 1e-3);
+    velY = (last.y - first.y) / dt;
+  }
+
+  if (velY < REARM_VEL) slot.strikeArmed = true;
+
+  const strike = velY > STRIKE_VEL;
+  const rhythmGate = now - slot.lastPlayAt > 100;
+
+  if (slot.strikeArmed && strike && rhythmGate && started && audioReady) {
+    const note = noteFromGesture(fx, fy);
+    if (note) {
+      const gain = clamp(1.25 - fy, 0.4, 1.0) * Tone.dbToGain(MODES[mode].gainDb);
+      playNote(note, gain);
+      slot.lastPlayAt = now;
+      slot.strikeArmed = false;
+    }
+  }
+}
 
 // =====================
 // HAND TRACKING
 // =====================
 const hands = new Hands({
-  locateFile: (file) =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`,
+  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`,
 });
 
 hands.setOptions({
-  maxNumHands: 1,
+  maxNumHands: 2,
   modelComplexity: 0,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7,
+  minDetectionConfidence: 0.6,
+  minTrackingConfidence: 0.6,
 });
 
+let processing = false;
+
 hands.onResults((results) => {
-  canvas.width = video.videoWidth || 320;
-  canvas.height = video.videoHeight || 240;
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const lm = results?.multiHandLandmarks?.[0];
-  if (!lm) {
-    nowPlaying.innerText = "--";
-    strikeArmed = true;
-    lastY = null;
-    return;
+  const lms = results?.multiHandLandmarks || [];
+
+  // Compute centroid (wrist) for each detected hand — used for spatial matching
+  const detected = lms.map((lm) => ({
+    lm,
+    centroidX: 1 - lm[0].x,  // mirrored
+    centroidY: lm[0].y,
+  }));
+
+  // Spatial assignment (ignores flaky Left/Right labels)
+  const assigned = assignHandsToSlots(detected);
+
+  for (let i = 0; i < slots.length; i++) {
+    processSlot(slots[i], assigned[i]);
   }
 
-  const tip = lm[8];
-  const rawX = clamp(tip.x, 0, 1);
-  const rawY = clamp(tip.y, 0, 1);
-
-  smoothedX = smoothAxis(smoothedX, rawX);
-  smoothedY = smoothAxis(smoothedY, rawY);
-
-  filteredX = thresholdAxis(filteredX, smoothedX);
-  filteredY = thresholdAxis(filteredY, smoothedY);
-
-  const px = filteredX * canvas.width;
-  const py = filteredY * canvas.height;
-
-  ctx.beginPath();
-  ctx.arc(px, py, 9, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(30, 240, 213, 0.85)";
-  ctx.fill();
-
-  const now = performance.now();
-  let velocityY = 0;
-  if (lastY !== null) {
-    velocityY = filteredY - lastY;
-  }
-  lastY = filteredY;
-
-  if (velocityY < REARM_UP_VELOCITY) {
-    strikeArmed = true;
-  }
-
-  const strike = velocityY > STRIKE_DOWN_VELOCITY;
-  const rhythmGate = now - lastPlayAt > MODES[mode].rhythmMs;
-
-  if (strikeArmed && strike && rhythmGate) {
-    const root = getRootFromGesture(filteredX, filteredY);
-    if (root) {
-      const phrase = buildPhrase(root);
-      playPhrase(phrase, filteredY);
-      lastPlayAt = now;
-      strikeArmed = false;
-    }
-  }
+  if (detected.length === 0) nowPlaying.innerText = "--";
 });
 
 // =====================
@@ -318,11 +366,11 @@ hands.onResults((results) => {
 video.onloadedmetadata = () => {
   const camera = new Camera(video, {
     onFrame: async () => {
-      if (video.readyState === 4) {
-        await hands.send({ image: video });
-      }
+      if (processing || video.readyState !== 4) return;
+      processing = true;
+      try { await hands.send({ image: video }); }
+      finally { processing = false; }
     },
   });
-
   camera.start();
 };
