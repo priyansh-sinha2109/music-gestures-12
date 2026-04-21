@@ -3,66 +3,91 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FigureFlow Drum</title>
+    <title>FigureFlow Gesture Drum</title>
 
-    <!-- MediaPipe -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
-
-    <!-- Tone -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
-    <header class="app-header">
-      <div class="brand">
-        <img src="../piano/logo.png" class="logo" alt="FigureFlow" />
-        <h2>FIGUREFLOW DRUM</h2>
-      </div>
-      <div class="hit-indicator"><span id="sound">--</span></div>
-    </header>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <span class="brand-name">FIGUREFLOW</span>
+            <span class="brand-sub">Gesture Drum Engine</span>
+          </div>
+        </div>
 
-    <div class="main-layout">
-      <section class="camera-section">
-        <div class="section-title">LIVE CAMERA CONTROL</div>
-        <video id="inputVideo" autoplay muted playsinline></video>
-        <canvas id="overlayCanvas"></canvas>
-      </section>
+        <div class="header-right">
+          <div class="header-status">
+            <span class="ready-dot" aria-hidden="true"></span>
+            <span id="status">Loading samples...</span>
+          </div>
+        </div>
+      </header>
 
-      <aside class="control-panel">
-        <div class="panel-title">GESTURE MODE</div>
-        <div id="status" class="status-line">Tap anywhere to enable audio</div>
-        <div class="tips">
-          <p>Right/Left hand both supported</p>
-          <p>Quick downward flick = drum hit</p>
-          <p>Move up to re-arm next hit</p>
-        </div>
-        <div class="nav-btn" onclick="location.href = '../piano/index.html'">
-          Piano Mode
-        </div>
-        <div class="nav-btn" onclick="location.href = '../music/index.html'">
-          Music Mode
-        </div>
-      </aside>
+      <main class="stage-wrap">
+        <section
+          class="drum-card"
+          id="drumStage"
+          aria-label="Gesture Drum Stage"
+        >
+          <img src="drum.png" alt="Drum Kit" class="drum-image" />
+
+          <button
+            class="zone crash"
+            data-zone="crash"
+            aria-label="Crash"
+          ></button>
+          <button class="zone ride" data-zone="ride" aria-label="Ride"></button>
+          <button
+            class="zone hihat"
+            data-zone="hihat"
+            aria-label="Hi-hat"
+          ></button>
+          <button
+            class="zone snare"
+            data-zone="snare"
+            aria-label="Snare"
+          ></button>
+          <button class="zone kick" data-zone="kick" aria-label="Kick"></button>
+          <button
+            class="zone tom1"
+            data-zone="tom1"
+            aria-label="High Tom"
+          ></button>
+          <button
+            class="zone tom2"
+            data-zone="tom2"
+            aria-label="Low Tom"
+          ></button>
+          <button
+            class="zone floor"
+            data-zone="floor"
+            aria-label="Floor Tom"
+          ></button>
+        </section>
+      </main>
+
+      <footer class="control-bar">
+        <div class="mode-chip">Drum Mode</div>
+
+        <label class="volume-wrap" for="volumePreview">
+          <span>Volume</span>
+          <input id="volumePreview" type="range" min="0" max="100" value="80" />
+        </label>
+
+        <div class="hit-chip">Last Hit: <span id="hit">--</span></div>
+      </footer>
     </div>
 
-    <section class="drum-stage" id="drumStage">
-      <img src="drum.png" class="drum-img" alt="Drum Kit" />
-
-      <button class="pad kick" data-type="kick" aria-label="Kick">KICK</button>
-      <button class="pad snare" data-type="snare" aria-label="Snare">
-        SNARE
-      </button>
-      <button class="pad hihat" data-type="hihat" aria-label="Hi-hat">
-        HI-HAT
-      </button>
-      <button class="pad crash" data-type="crash" aria-label="Crash">
-        CRASH
-      </button>
-      <button class="pad tom" data-type="tom" aria-label="Tom">TOM</button>
-    </section>
+    <!-- Background-only camera elements (hidden in CSS) -->
+    <video id="bgVideo" autoplay muted playsinline aria-hidden="true"></video>
+    <canvas id="bgCanvas" aria-hidden="true"></canvas>
 
     <script src="script.js"></script>
   </body>
