@@ -248,15 +248,15 @@ buildPiano();
 // =====================
 // TRACKING
 // =====================
-const PRESS_ON = 0.56;
-const PRESS_OFF = 0.5;
-const SMOOTHING_ALPHA = 0.58;
-const MOVEMENT_THRESHOLD = 0.01;
-const NOTE_CHANGE_DEBOUNCE_MS = 55;
-const STABLE_FRAMES_REQUIRED = 1;
-const BLACK_KEY_TOLERANCE = 0.05;
-const LEFT_BLACK_TOLERANCE = 0.14;
-const RELEASE_DELAY_MS = 28;
+const PRESS_ON = 0.62;
+const PRESS_OFF = 0.54;
+const SMOOTHING_ALPHA = 0.45;
+const MOVEMENT_THRESHOLD = 0.018;
+const NOTE_CHANGE_DEBOUNCE_MS = 120;
+const STABLE_FRAMES_REQUIRED = 3;
+const BLACK_KEY_TOLERANCE = 0.04;
+const LEFT_BLACK_TOLERANCE = 0.12;
+const RELEASE_DELAY_MS = 50;
 
 function makeHandState() {
   return {
@@ -573,3 +573,177 @@ video.onloadedmetadata = () => {
 
   camera.start();
 };
+// =====================
+// 📚 SARGAM LEARNING MODE (Optimized)
+// =====================
+
+const SARGAM = [
+  { name: "Sa",  note: "C4" },
+  { name: "Re",  note: "D4" },
+  { name: "Ga",  note: "E4" },
+  { name: "Ma",  note: "F4" },
+  { name: "Pa",  note: "G4" },
+  { name: "Dha", note: "A4" },
+  { name: "Ni",  note: "B4" },
+  { name: "Sa↑", note: "C5" },
+];
+
+let learnMode = false;
+let learnIndex = 0;
+let learnLocked = false;
+let lastCheckedNote = null;
+let lastCheckTime = 0;
+const LEARN_COOLDOWN_MS = 600; // prevent rapid re-checks
+
+const freestyleBtn = document.getElementById("freestyleBtn");
+const learnBtn = document.getElementById("learnBtn");
+const sargamBox = document.getElementById("sargamBox");
+const sargamDisplay = document.getElementById("sargamDisplay");
+const sargamHint = document.getElementById("sargamHint");
+const sargamProgress = document.getElementById("sargamProgress");
+
+// --- Mode Switching ---
+freestyleBtn.addEventListener("click", () => {
+  learnMode = false;
+  learnLocked = false;
+  lastCheckedNote = null;
+  freestyleBtn.classList.add("active");
+  learnBtn.classList.remove("active");
+  sargamBox.style.display = "none";
+  clearLearnTarget();
+});
+
+learnBtn.addEventListener("click", async () => {
+  await ensureAudioStarted();
+  learnMode = true;
+  learnIndex = 0;
+  learnLocked = false;
+  lastCheckedNote = null;
+  lastCheckTime = 0;
+  learnBtn.classList.add("active");
+  freestyleBtn.classList.remove("active");
+  sargamBox.style.display = "block";
+  showCurrentSargam();
+});
+
+function showCurrentSargam() {
+  clearLearnTarget();
+  const current = SARGAM[learnIndex];
+  sargamDisplay.innerText = current.name;
+  sargamHint.innerText = "Press " + current.note;
+  sargamHint.style.color = "#ffdd00";
+  sargamProgress.innerText = `${learnIndex} / ${SARGAM.length}`;
+  blinkTargetKey(current.note);
+}
+
+function blinkTargetKey(note) {
+  const key = keys.find(k => k.note === note);
+  if (key?.el) {
+    key.el.classList.add("learn-target");
+  }
+}
+
+function clearLearnTarget() {
+  document.querySelectorAll(".learn-target, .learn-correct, .learn-wrong")
+    .forEach(el => {
+      el.classList.remove("learn-target", "learn-correct", "learn-wrong");
+    });
+}
+
+// --- Safe lock release (always runs even if error) ---
+function releaseLearnLock(delay = 500) {
+  setTimeout(() => {
+    learnLocked = false;
+    lastCheckedNote = null;
+  }, delay);
+}
+
+function checkLearning(playedNote) {
+  if (!learnMode) return;
+
+  const now = performance.now();
+
+  // 🛡️ Safety cooldown: ignore rapid repeats of same note
+  if (playedNote === lastCheckedNote && now - lastCheckTime < LEARN_COOLDOWN_MS) {
+    return;
+  }
+
+  if (learnLocked) return;
+
+  lastCheckedNote = playedNote;
+  lastCheckTime = now;
+  learnLocked = true;
+
+  const target = SARGAM[learnIndex];
+  const key = keys.find(k => k.note === target.note);
+
+  if (playedNote === target.note) {
+    // ✅ Correct
+    if (key?.el) {
+      key.el.classList.remove("learn-target");
+      key.el.classList.add("learn-correct");
+    }
+    sargamHint.innerText = "✅ Correct!";
+    sargamHint.style.color = "#39e27d";
+
+    setTimeout(() => {
+      // Clear classes safely
+      if (key?.el) {
+        key.el.classList.remove("learn-correct");
+      }
+
+      learnIndex++;
+
+      if (learnIndex >= SARGAM.length) {
+        sargamDisplay.innerText = "🏆";
+        sargamHint.innerText = "Completed!";
+        sargamHint.style.color = "#00ffd0";
+        sargamProgress.innerText = `${SARGAM.length} / ${SARGAM.length}`;
+        
+        setTimeout(() => {
+          learnIndex = 0;
+          learnLocked = false;
+          lastCheckedNote = null;
+          showCurrentSargam();
+        }, 1800);
+      } else {
+        learnLocked = false;
+        lastCheckedNote = null;
+        showCurrentSargam();
+      }
+    }, 600);
+
+  } else {
+    // ❌ Wrong
+    const wrongKey = keys.find(k => k.note === playedNote);
+    if (wrongKey?.el) {
+      wrongKey.el.classList.add("learn-wrong");
+      setTimeout(() => {
+        wrongKey.el.classList.remove("learn-wrong");
+      }, 400);
+    }
+    sargamHint.innerText = "❌ Try " + target.note;
+    sargamHint.style.color = "#ff3366";
+
+    setTimeout(() => {
+      if (learnMode) {
+        sargamHint.innerText = "Press " + target.note;
+        sargamHint.style.color = "#ffdd00";
+      }
+      learnLocked = false;
+      lastCheckedNote = null;
+    }, 600);
+  }
+}
+
+// --- Hook into existing noteOn (safer version) ---
+if (typeof noteOn === "function" && !window._learnHooked) {
+  const _originalNoteOn = noteOn;
+  noteOn = function (note) {
+    _originalNoteOn(note);
+    if (learnMode) {
+      checkLearning(note);
+    }
+  };
+  window._learnHooked = true;
+}
