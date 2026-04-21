@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FigureFlow Drum</title>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+
+    <!-- Tone -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <img src="../piano/logo.png" class="logo" alt="FigureFlow" />
+        <h2>FIGUREFLOW DRUM</h2>
+      </div>
+      <div class="hit-indicator"><span id="sound">--</span></div>
+    </header>
+
+    <div class="main-layout">
+      <section class="camera-section">
+        <div class="section-title">LIVE CAMERA CONTROL</div>
+        <video id="inputVideo" autoplay muted playsinline></video>
+        <canvas id="overlayCanvas"></canvas>
+      </section>
+
+      <aside class="control-panel">
+        <div class="panel-title">GESTURE MODE</div>
+        <div id="status" class="status-line">Tap anywhere to enable audio</div>
+        <div class="tips">
+          <p>Right/Left hand both supported</p>
+          <p>Quick downward flick = drum hit</p>
+          <p>Move up to re-arm next hit</p>
+        </div>
+        <div class="nav-btn" onclick="location.href = '../piano/index.html'">
+          Piano Mode
+        </div>
+        <div class="nav-btn" onclick="location.href = '../music/index.html'">
+          Music Mode
+        </div>
+      </aside>
+    </div>
+
+    <section class="drum-stage" id="drumStage">
+      <img src="drum.png" class="drum-img" alt="Drum Kit" />
+
+      <button class="pad kick" data-type="kick" aria-label="Kick">KICK</button>
+      <button class="pad snare" data-type="snare" aria-label="Snare">
+        SNARE
+      </button>
+      <button class="pad hihat" data-type="hihat" aria-label="Hi-hat">
+        HI-HAT
+      </button>
+      <button class="pad crash" data-type="crash" aria-label="Crash">
+        CRASH
+      </button>
+      <button class="pad tom" data-type="tom" aria-label="Tom">TOM</button>
+    </section>
+
+    <script src="script.js"></script>
+  </body>
+</html>
