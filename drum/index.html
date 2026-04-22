@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FigureFlow Gesture Drum</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <span class="brand-name">FIGUREFLOW</span>
+            <span class="brand-sub">Gesture Drum Engine</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-status">
+            <span class="ready-dot" aria-hidden="true"></span>
+            <span id="status">Loading samples...</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="stage-wrap">
+        <section
+          class="drum-card"
+          id="drumStage"
+          aria-label="Gesture Drum Stage"
+        >
+          <img src="drum.png" alt="Drum Kit" class="drum-image" />
+
+          <button
+            class="zone crash"
+            data-zone="crash"
+            aria-label="Crash"
+          ></button>
+          <button class="zone ride" data-zone="ride" aria-label="Ride"></button>
+          <button
+            class="zone hihat"
+            data-zone="hihat"
+            aria-label="Hi-hat"
+          ></button>
+          <button
+            class="zone snare"
+            data-zone="snare"
+            aria-label="Snare"
+          ></button>
+          <button class="zone kick" data-zone="kick" aria-label="Kick"></button>
+          <button
+            class="zone tom1"
+            data-zone="tom1"
+            aria-label="High Tom"
+          ></button>
+          <button
+            class="zone tom2"
+            data-zone="tom2"
+            aria-label="Low Tom"
+          ></button>
+          <button
+            class="zone floor"
+            data-zone="floor"
+            aria-label="Floor Tom"
+          ></button>
+        </section>
+      </main>
+
+      <footer class="control-bar">
+        <div class="mode-chip">Drum Mode</div>
+
+        <label class="volume-wrap" for="volumePreview">
+          <span>Volume</span>
+          <input id="volumePreview" type="range" min="0" max="100" value="80" />
+        </label>
+
+        <div class="hit-chip">Last Hit: <span id="hit">--</span></div>
+      </footer>
+    </div>
+
+    <!-- Background-only camera elements (hidden in CSS) -->
+    <video id="bgVideo" autoplay muted playsinline aria-hidden="true"></video>
+    <canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+    <script src="script.js"></script>
+  </body>
+</html>

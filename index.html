@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FigureFlow</title>
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        transition: opacity 0.5s ease;
+      }
+
+      .container {
+        max-width: 600px;
+      }
+
+      h1 {
+        font-size: 60px;
+        letter-spacing: 4px;
+        margin: 0;
+      }
+
+      .tagline {
+        margin-top: 10px;
+        font-size: 18px;
+        opacity: 0.7;
+      }
+
+      .enter-btn {
+        margin-top: 40px;
+        padding: 15px 40px;
+        font-size: 18px;
+        border: none;
+        border-radius: 30px;
+        background: white;
+        color: black;
+        cursor: pointer;
+        transition: 0.3s ease;
+      }
+
+      .enter-btn:hover {
+        transform: scale(1.1);
+        background: #22c55e;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>FIGUREFLOW</h1>
+      <div class="tagline">Control Music with Your Hands</div>
+
+      <button class="enter-btn" onclick="enterApp()">Enter Experience</button>
+    </div>
+
+    <script>
+      function enterApp() {
+        document.body.style.opacity = "0";
+
+        setTimeout(() => {
+          window.location.href = "/piano/";
+        }, 500);
+      }
+    </script>
+  </body>
+</html>

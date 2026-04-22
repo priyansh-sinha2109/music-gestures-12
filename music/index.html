@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FigureFlow Music</title>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+
+    <!-- Tone -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <img src="../piano/logo.png" class="logo" alt="FigureFlow" />
+        <h2>FIGUREFLOW MUSIC</h2>
+      </div>
+      <div class="now-playing" id="nowPlaying">--</div>
+    </header>
+
+    <div class="main-layout">
+      <section class="camera-section">
+        <div class="section-title">LIVE MELODY CONTROL</div>
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+      </section>
+
+      <aside class="control-panel">
+        <div class="panel-title">MELODY ENGINE</div>
+        <div id="status" class="status-line">Tap anywhere to enable audio</div>
+
+        <div class="mode-group">
+          <button class="mode-btn active" data-mode="cinematic">
+            Cinematic
+          </button>
+          <button class="mode-btn" data-mode="uplift">Uplift</button>
+          <button class="mode-btn" data-mode="chill">Chill</button>
+        </div>
+
+        <div class="tips">
+          <p>Move hand left/right to change root notes</p>
+          <p>Move hand up/down to change octave + energy</p>
+          <p>Pinch down motion triggers next melody phrase</p>
+        </div>
+
+        <div class="nav-btn" onclick="location.href = '../piano/index.html'">
+          Piano Mode
+        </div>
+        <div class="nav-btn" onclick="location.href = '../drum/index.html'">
+          Drum Mode
+        </div>
+      </aside>
+    </div>
+
+    <div class="keyboard-wrapper">
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

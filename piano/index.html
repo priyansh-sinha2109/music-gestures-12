@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FigureFlow Piano</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <img src="logo.png" class="logo" />
+        <h2>FIGUREFLOW</h2>
+      </div>
+
+      <div class="note-indicator">🎵 <span id="currentNote">--</span></div>
+    </header>
+
+    <div class="main-layout">
+      <div class="camera-section">
+        <div class="section-title">LIVE CONTROL</div>
+        <video id="inputVideo" autoplay muted playsinline></video>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+
+      <div class="control-panel">
+        <div class="panel-title">MODES</div>
+
+        <div class="mode-btn active" id="freestyleBtn">🎹 Free Play</div>
+        <div class="mode-btn" id="learnBtn">📚 Learn Sargam</div>
+
+        <button
+          class="mode-btn playground-btn"
+          onclick="window.location.href = '../playground/index.html'"
+        >
+          🎮 Playground Mode
+        </button>
+
+        <!-- Sargam Display -->
+        <div id="sargamBox" style="display: none">
+          <div class="panel-title" style="margin-top: 10px">PLAY THIS:</div>
+          <div id="sargamDisplay">Sa</div>
+          <div id="sargamHint">Press C4</div>
+          <div id="sargamProgress">0 / 8</div>
+        </div>
+
+        <div class="mode-btn" onclick="location.href = '../drum/index.html'">
+          🥁 Drum Mode
+        </div>
+      </div>
+    </div>
+
+    <!-- PIANO -->
+    <div class="keyboard-wrapper">
+      <div class="keyboard" id="keyboard"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
