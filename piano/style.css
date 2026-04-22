@@ -1,4 +1,3 @@
-/* GLOBAL */
 body {
   margin: 0;
   background: #0b0b0b;
@@ -56,16 +55,14 @@ body {
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 5;
   font-size: 12px;
   color: #00ffd0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0,0,0,0.6);
   padding: 4px 10px;
   border-radius: 6px;
 }
 
-video,
-canvas {
+video, canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -82,7 +79,7 @@ canvas {
   border: 2px solid #00ffd0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .panel-title {
@@ -91,11 +88,14 @@ canvas {
 }
 
 .mode-btn {
-  padding: 14px;
+  width: 100%;
+  padding: 12px;
   background: #111827;
   border-radius: 10px;
   cursor: pointer;
   text-align: center;
+  border: none;
+  color: white;
   transition: 0.2s;
 }
 
@@ -104,7 +104,43 @@ canvas {
   color: black;
 }
 
-/* PIANO WRAPPER */
+.mode-btn.active {
+  background: #00ffd0;
+  color: black;
+}
+
+/* SPECIAL BUTTON */
+.playground-btn {
+  background: linear-gradient(135deg, #00e5ff, #ff4081);
+  color: black;
+  font-weight: bold;
+}
+
+/* SARGAM */
+#sargamBox {
+  display: none;
+  background: #111827;
+  border: 2px solid #00ffd0;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+#sargamDisplay {
+  font-size: 42px;
+  font-weight: bold;
+  color: #00ffd0;
+}
+
+#sargamHint {
+  color: #ffdd00;
+}
+
+#sargamProgress {
+  opacity: 0.7;
+}
+
+/* PIANO */
 .keyboard-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -112,33 +148,20 @@ canvas {
   border-top: 2px solid #00ffd0;
 }
 
-/* PIANO */
 .keyboard {
-  position: relative;
   display: flex;
   height: 38vh;
-  width: max-content; /* 🔥 full 61 key support */
+  width: max-content;
 }
 
 /* WHITE KEYS */
 .white {
-  width: 52px; /* balanced */
-  min-width: 52px;
-  background: linear-gradient(to bottom, #ffffff, #e6e6e6);
+  width: 52px;
+  background: white;
   border-right: 1px solid #bbb;
-  position: relative;
-
   display: flex;
   justify-content: center;
   align-items: flex-end;
-}
-
-.white-label {
-  position: absolute;
-  bottom: 8px;
-  font-size: 11px;
-  color: #333;
-  font-weight: bold;
 }
 
 .white.active {
@@ -152,138 +175,8 @@ canvas {
   height: 60%;
   background: black;
   z-index: 2;
-  border-radius: 4px;
-
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.black span {
-  font-size: 9px;
-  color: white;
 }
 
 .black.active {
   background: #00ffd0;
 }
-
-/* SCROLLBAR */
-.keyboard-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  background: #111;
-  border-top: 2px solid #00ffd0;
-}
-
-.keyboard-wrapper::-webkit-scrollbar-thumb {
-  background: #00ffd0;
-}
-
-/* ================================ */
-/* 📚 SARGAM LEARNING MODE         */
-/* ================================ */
-
-.mode-btn.active {
-  background: #00ffd0;
-  color: black;
-  font-weight: bold;
-}
-
-#sargamBox {
-  background: #111827;
-  border: 2px solid #00ffd0;
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-}
-
-#sargamDisplay {
-  font-size: 42px;
-  font-weight: bold;
-  color: #00ffd0;
-  text-shadow: 0 0 15px #00ffd0;
-  margin: 8px 0;
-}
-
-#sargamHint {
-  color: #ffdd00;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-#sargamProgress {
-  color: #fff;
-  font-size: 12px;
-  margin-top: 8px;
-  opacity: 0.7;
-}
-
-/* Blinking key animation (target note) */
-.white.learn-target,
-.black.learn-target {
-  animation: blinkLearn 0.8s infinite;
-}
-
-@keyframes blinkLearn {
-<<<<<<< HEAD
-  0%,
-  100% {
-=======
-  0%, 100% {
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
-    background: #ffdd00 !important;
-    box-shadow: 0 0 20px #ffdd00;
-  }
-  50% {
-    background: #ffffff !important;
-    box-shadow: 0 0 5px #ffdd00;
-  }
-}
-
-/* Correct flash */
-.white.learn-correct,
-.black.learn-correct {
-  background: #39e27d !important;
-  box-shadow: 0 0 25px #39e27d !important;
-  animation: none !important;
-}
-
-/* Wrong flash */
-.white.learn-wrong,
-.black.learn-wrong {
-  background: #ff3366 !important;
-  box-shadow: 0 0 25px #ff3366 !important;
-  animation: none !important;
-<<<<<<< HEAD
-}
-
-.mode-btn:nth-child(4) {
-  border: 1px solid #00ffd0;
-  box-shadow: 0 0 10px rgba(0, 255, 208, 0.3);
-}
-.playground-btn {
-  background: linear-gradient(135deg, #00e5ff, #ff4081);
-  color: #000;
-  font-weight: 700;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  letter-spacing: 0.5px;
-  transition:
-    box-shadow 0.2s,
-    transform 0.1s;
-}
-.playground-btn:hover {
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
-  transform: translateY(-1px);
-}
-.playground-btn:active {
-  transform: translateY(0);
-}
-=======
-}
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b

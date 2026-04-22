@@ -127,14 +127,18 @@ function highlight(note, on) {
 function noteOn(note) {
   highlight(note, true);
 
-  if (!started || !samplesReady) return;
+  // 🔥 THIS FIX SOLVES YOUR "NO SOUND" ISSUE
+  if (!started) {
+    ensureAudioStarted();
+  }
+
+  if (!samplesReady) return;
 
   const { base, shift } = getBase(note);
   const player = players[base];
   if (!player) return;
 
-  const boostedGain = Math.min(1.45, currentVolume * 1.35);
-  player.volume.value = Tone.gainToDb(boostedGain) + MASTER_BOOST_DB;
+  player.volume.value = Tone.gainToDb(currentVolume);
   player.playbackRate = Math.pow(2, shift / 12);
 
   player.stop();
