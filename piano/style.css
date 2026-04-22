@@ -227,8 +227,12 @@ canvas {
 }
 
 @keyframes blinkLearn {
+<<<<<<< HEAD
   0%,
   100% {
+=======
+  0%, 100% {
+>>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
     background: #ffdd00 !important;
     box-shadow: 0 0 20px #ffdd00;
   }
@@ -252,6 +256,7 @@ canvas {
   background: #ff3366 !important;
   box-shadow: 0 0 25px #ff3366 !important;
   animation: none !important;
+<<<<<<< HEAD
 }
 
 .mode-btn:nth-child(4) {
@@ -279,3 +284,6 @@ canvas {
 .playground-btn:active {
   transform: translateY(0);
 }
+=======
+}
+>>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
