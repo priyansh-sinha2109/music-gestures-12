@@ -355,7 +355,6 @@ function detectNoteFromX(x) {
   const white = detectClosestWhiteKey(x);
   const black = detectClosestBlackKeyDetailed(x);
 
-  // White keys are default. Switch to black only when confidently closer.
   if (black.note && black.dist < white.dist * 0.58) {
     return black.note;
   }
@@ -525,12 +524,13 @@ hands.onResults((results) => {
   let rightLm = null;
   let leftLm = null;
 
+  // Camera is mirrored: MediaPipe's "left" = user's right hand, and vice versa
   for (let i = 0; i < landmarks.length; i++) {
     const lm = landmarks[i];
     const label = handedness?.[i]?.label?.toLowerCase();
 
-    if (label === "right" && !rightLm) rightLm = lm;
-    else if (label === "left" && !leftLm) leftLm = lm;
+    if (label === "left" && !rightLm) rightLm = lm;
+    else if (label === "right" && !leftLm) leftLm = lm;
   }
 
   // Robust fallback when handedness is unstable.
@@ -542,7 +542,8 @@ hands.onResults((results) => {
     const onlyLm = landmarks[0];
     const onlyLabel = handedness?.[0]?.label?.toLowerCase();
 
-    if (onlyLabel === "left") {
+    // Swapped due to mirrored camera
+    if (onlyLabel === "right") {
       processHand(handState.right, null, now, "right");
       processHand(handState.left, onlyLm, now, "left");
     } else {
@@ -553,7 +554,7 @@ hands.onResults((results) => {
     return;
   }
 
-  // Two-hand mode: right->white only, left->black only.
+  // Two-hand mode: right hand -> white keys only, left hand -> black keys only.
   processHand(handState.right, rightLm, now, "right");
   processHand(handState.left, leftLm, now, "left");
   setDisplay();
@@ -573,6 +574,7 @@ video.onloadedmetadata = () => {
 
   camera.start();
 };
+
 // =====================
 // 📚 SARGAM LEARNING MODE (Optimized)
 // =====================
@@ -593,7 +595,7 @@ let learnIndex = 0;
 let learnLocked = false;
 let lastCheckedNote = null;
 let lastCheckTime = 0;
-const LEARN_COOLDOWN_MS = 600; // prevent rapid re-checks
+const LEARN_COOLDOWN_MS = 600;
 
 const freestyleBtn = document.getElementById("freestyleBtn");
 const learnBtn = document.getElementById("learnBtn");
@@ -602,7 +604,6 @@ const sargamDisplay = document.getElementById("sargamDisplay");
 const sargamHint = document.getElementById("sargamHint");
 const sargamProgress = document.getElementById("sargamProgress");
 
-// --- Mode Switching ---
 freestyleBtn.addEventListener("click", () => {
   learnMode = false;
   learnLocked = false;
@@ -650,7 +651,6 @@ function clearLearnTarget() {
     });
 }
 
-// --- Safe lock release (always runs even if error) ---
 function releaseLearnLock(delay = 500) {
   setTimeout(() => {
     learnLocked = false;
@@ -663,7 +663,6 @@ function checkLearning(playedNote) {
 
   const now = performance.now();
 
-  // 🛡️ Safety cooldown: ignore rapid repeats of same note
   if (playedNote === lastCheckedNote && now - lastCheckTime < LEARN_COOLDOWN_MS) {
     return;
   }
@@ -678,7 +677,6 @@ function checkLearning(playedNote) {
   const key = keys.find(k => k.note === target.note);
 
   if (playedNote === target.note) {
-    // ✅ Correct
     if (key?.el) {
       key.el.classList.remove("learn-target");
       key.el.classList.add("learn-correct");
@@ -687,7 +685,6 @@ function checkLearning(playedNote) {
     sargamHint.style.color = "#39e27d";
 
     setTimeout(() => {
-      // Clear classes safely
       if (key?.el) {
         key.el.classList.remove("learn-correct");
       }
@@ -714,7 +711,6 @@ function checkLearning(playedNote) {
     }, 600);
 
   } else {
-    // ❌ Wrong
     const wrongKey = keys.find(k => k.note === playedNote);
     if (wrongKey?.el) {
       wrongKey.el.classList.add("learn-wrong");
@@ -736,7 +732,6 @@ function checkLearning(playedNote) {
   }
 }
 
-// --- Hook into existing noteOn (safer version) ---
 if (typeof noteOn === "function" && !window._learnHooked) {
   const _originalNoteOn = noteOn;
   noteOn = function (note) {
