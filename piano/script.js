@@ -138,7 +138,8 @@ function noteOn(note) {
   player.playbackRate = Math.pow(2, shift / 12);
 
   player.stop();
-  player.start();
+  player.start();🎵 --
+
 }
 
 function noteOff(note) {
