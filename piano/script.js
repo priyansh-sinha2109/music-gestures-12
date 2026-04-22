@@ -355,10 +355,7 @@ function detectNoteFromX(x) {
   const white = detectClosestWhiteKey(x);
   const black = detectClosestBlackKeyDetailed(x);
 
-<<<<<<< HEAD
   // White keys are default. Switch to black only when confidently closer.
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
   if (black.note && black.dist < white.dist * 0.58) {
     return black.note;
   }
@@ -528,21 +525,13 @@ hands.onResults((results) => {
   let rightLm = null;
   let leftLm = null;
 
-<<<<<<< HEAD
-=======
   // Camera is mirrored: MediaPipe's "left" = user's right hand, and vice versa
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
   for (let i = 0; i < landmarks.length; i++) {
     const lm = landmarks[i];
     const label = handedness?.[i]?.label?.toLowerCase();
 
-<<<<<<< HEAD
-    if (label === "right" && !rightLm) rightLm = lm;
-    else if (label === "left" && !leftLm) leftLm = lm;
-=======
     if (label === "left" && !rightLm) rightLm = lm;
     else if (label === "right" && !leftLm) leftLm = lm;
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
   }
 
   // Robust fallback when handedness is unstable.
@@ -554,12 +543,8 @@ hands.onResults((results) => {
     const onlyLm = landmarks[0];
     const onlyLabel = handedness?.[0]?.label?.toLowerCase();
 
-<<<<<<< HEAD
-    if (onlyLabel === "left") {
-=======
     // Swapped due to mirrored camera
     if (onlyLabel === "right") {
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
       processHand(handState.right, null, now, "right");
       processHand(handState.left, onlyLm, now, "left");
     } else {
@@ -570,11 +555,7 @@ hands.onResults((results) => {
     return;
   }
 
-<<<<<<< HEAD
-  // Two-hand mode: right->white only, left->black only.
-=======
   // Two-hand mode: right hand -> white keys only, left hand -> black keys only.
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
   processHand(handState.right, rightLm, now, "right");
   processHand(handState.left, leftLm, now, "left");
   setDisplay();
@@ -594,10 +575,7 @@ video.onloadedmetadata = () => {
 
   camera.start();
 };
-<<<<<<< HEAD
-=======
 
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
 // =====================
 // 📚 SARGAM LEARNING MODE (Optimized)
 // =====================
@@ -618,11 +596,7 @@ let learnIndex = 0;
 let learnLocked = false;
 let lastCheckedNote = null;
 let lastCheckTime = 0;
-<<<<<<< HEAD
 const LEARN_COOLDOWN_MS = 600; // prevent rapid re-checks
-=======
-const LEARN_COOLDOWN_MS = 600;
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
 
 const freestyleBtn = document.getElementById("freestyleBtn");
 const learnBtn = document.getElementById("learnBtn");
@@ -631,10 +605,7 @@ const sargamDisplay = document.getElementById("sargamDisplay");
 const sargamHint = document.getElementById("sargamHint");
 const sargamProgress = document.getElementById("sargamProgress");
 
-<<<<<<< HEAD
 // --- Mode Switching ---
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
 freestyleBtn.addEventListener("click", () => {
   learnMode = false;
   learnLocked = false;
@@ -682,10 +653,7 @@ function clearLearnTarget() {
     });
 }
 
-<<<<<<< HEAD
 // --- Safe lock release (always runs even if error) ---
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
 function releaseLearnLock(delay = 500) {
   setTimeout(() => {
     learnLocked = false;
@@ -698,10 +666,7 @@ function checkLearning(playedNote) {
 
   const now = performance.now();
 
-<<<<<<< HEAD
   // 🛡️ Safety cooldown: ignore rapid repeats of same note
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
   if (playedNote === lastCheckedNote && now - lastCheckTime < LEARN_COOLDOWN_MS) {
     return;
   }
@@ -716,10 +681,7 @@ function checkLearning(playedNote) {
   const key = keys.find(k => k.note === target.note);
 
   if (playedNote === target.note) {
-<<<<<<< HEAD
     // ✅ Correct
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
     if (key?.el) {
       key.el.classList.remove("learn-target");
       key.el.classList.add("learn-correct");
@@ -728,10 +690,7 @@ function checkLearning(playedNote) {
     sargamHint.style.color = "#39e27d";
 
     setTimeout(() => {
-<<<<<<< HEAD
       // Clear classes safely
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
       if (key?.el) {
         key.el.classList.remove("learn-correct");
       }
@@ -758,10 +717,7 @@ function checkLearning(playedNote) {
     }, 600);
 
   } else {
-<<<<<<< HEAD
     // ❌ Wrong
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
     const wrongKey = keys.find(k => k.note === playedNote);
     if (wrongKey?.el) {
       wrongKey.el.classList.add("learn-wrong");
@@ -783,10 +739,7 @@ function checkLearning(playedNote) {
   }
 }
 
-<<<<<<< HEAD
 // --- Hook into existing noteOn (safer version) ---
-=======
->>>>>>> 1a3b2cb1c00a474df25cd65b6b8c5b99a43b805b
 if (typeof noteOn === "function" && !window._learnHooked) {
   const _originalNoteOn = noteOn;
   noteOn = function (note) {
