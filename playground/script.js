@@ -27,8 +27,8 @@ const MP_CONF_DET = 0.72;
 const MP_CONF_TRK = 0.6;
 const MP_MAX_HANDS = 2;
 const MP_MODEL_COMPLEXITY = 0;
-const CAM_WIDTH = 800; // ← increased for better landmark detection
-const CAM_HEIGHT = 400; // ← increased for better landmark detection
+const CAM_WIDTH = 600; // ← increased for better landmark detection
+const CAM_HEIGHT = 200; // ← increased for better landmark detection
 const DEBOUNCE_MS = 250;
 
 const HAND_RULES = {
